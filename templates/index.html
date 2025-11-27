@@ -369,12 +369,14 @@
     </div>
 
     <div class="footer">
-        Air Quality Monitoring System · Powered by Flask, MongoDB & Chart.js<br>
-        Developed by Utsav
+        Air Quality Monitoring System · Developed by Utsav
     </div>
 
     {% if not no_data %}
     <script>
+        setInterval(()=>{
+            window.location.reload()
+        },5000)
         // Data from Flask backend
         const timestamps = {{ timestamps|safe }};
         const mqValues = {{ mq_values|safe }};
