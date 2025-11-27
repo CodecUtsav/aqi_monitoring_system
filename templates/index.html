@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Monitoring System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 2rem 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .header-subtitle {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            font-weight: 400;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 2.5rem;
+        }
+
+        /* Status Banner */
+        .status-banner {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        .status-text {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+
+        .metric-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .metric-subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .metric-subtitle strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        /* Charts Section */
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .chart-header {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chart-badge {
+            font-size: 0.75rem;
+            background: #f1f5f9;
+            color: #64748b;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        canvas {
+            max-height: 300px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            border: 2px dashed #e2e8f0;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-text {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: #64748b;
+            font-size: 0.875rem;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 3rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .container {
+                padding: 1.5rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-value {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <div class="header-content">
+            <h1 class="header-title">Air Quality Monitoring System</h1>
+            <div class="header-subtitle">
+                Real-time environmental monitoring with Arduino, MQ sensors, and DHT11 · Data powered by MongoDB & Python
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        {% if no_data %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <h2 class="empty-state-title">No Data Available</h2>
+            <p class="empty-state-text">
+                Waiting for sensor data. Please ensure your Arduino and Python server are running and connected to MongoDB.
+            </p>
+        </div>
+        {% else %}
+
+        <div class="status-banner">
+            <div class="status-text">
+                <span class="status-dot"></span>
+                System Active · Last updated: {{ current_time }}
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Air Quality (MQ)</div>
+                <div class="metric-value">
+                    {{ current_mq if current_mq is not none else "—" }}
+                </div>
+                <div class="metric-subtitle">
+                    Status: <strong>{{ current_quality }}</strong><br>
+                    Average: {{ avg_mq if avg_mq is not none else "—" }}
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Temperature</div>
+                <div class="metric-value">
+                    {{ current_temp if current_temp is not none else "—" }}°C
+                </div>
+                <div class="metric-subtitle">
+                    Average: {{ avg_temp if avg_temp is not none else "—" }}°C
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Humidity</div>
+                <div class="metric-value">
+                    {{ current_hum if current_hum is not none else "—" }}%
+                </div>
+                <div class="metric-subtitle">
+                    Average: {{ avg_hum if avg_hum is not none else "—" }}%
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Daily Comparison</div>
+                <div class="metric-value">
+                    {% if today_avg is not none and yesterday_avg is not none %}
+                    {{ today_avg }} <span style="font-size: 1rem; color: #64748b;">vs</span> {{ yesterday_avg }}
+                    {% else %}
+                    Insufficient Data
+                    {% endif %}
+                </div>
+                <div class="metric-subtitle">
+                    Today: {{ today_str }}<br>
+                    Yesterday: {{ yesterday_str }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <h2 class="section-title">Sensor Analytics</h2>
+
+        <div class="charts-row">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <span>MQ Sensor Timeline</span>
+                    <span class="chart-badge">Live Data</span>
+                </div>
+                <canvas id="mqChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <span>Air Quality Distribution</span>
+                    <span class="chart-badge">Category Breakdown</span>
+                </div>
+                <canvas id="qualityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <span>Temperature & Humidity Trends</span>
+                    <span class="chart-badge">Dual Axis</span>
+                </div>
+                <canvas id="tempHumChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <span>Daily Average Air Quality</span>
+                    <span class="chart-badge">Historical</span>
+                </div>
+                <canvas id="dailyAvgChart"></canvas>
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        Air Quality Monitoring System · Powered by Flask, MongoDB & Chart.js<br>
+        Developed by Utsav
+    </div>
+
+    {% if not no_data %}
+    <script>
+        // Data from Flask backend
+        const timestamps = {{ timestamps|safe }};
+        const mqValues = {{ mq_values|safe }};
+        const tempValues = {{ temp_values|safe }};
+        const humValues = {{ hum_values|safe }};
+        const dayLabels = {{ day_labels|safe }};
+        const dayAvgMq = {{ day_avg_mq|safe }};
+        const qLabels = {{ quality_labels|safe }};
+        const qCounts = {{ quality_counts|safe }};
+
+        // Chart.js configuration
+        Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = "#64748b";
+        Chart.defaults.borderColor = "#e2e8f0";
+
+        const chartColors = {
+            primary: "#3b82f6",
+            success: "#10b981",
+            warning: "#f59e0b",
+            danger: "#ef4444",
+            info: "#06b6d4",
+            purple: "#8b5cf6"
+        };
+
+        // MQ Sensor Timeline
+        new Chart(document.getElementById("mqChart"), {
+            type: "line",
+            data: {
+                labels: timestamps,
+                datasets: [{
+                    label: "MQ Sensor Value",
+                    data: mqValues,
+                    borderColor: chartColors.primary,
+                    backgroundColor: "rgba(59, 130, 246, 0.1)",
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: chartColors.primary,
+                    pointHoverBorderColor: "#fff",
+                    pointHoverBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { padding: 15, usePointStyle: true }
+                    },
+                    tooltip: {
+                        mode: "index",
+                        intersect: false,
+                        backgroundColor: "#1e293b",
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 0, maxTicksLimit: 8 }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        grid: { color: "#f1f5f9" },
+                        border: { display: false }
+                    }
+                },
+                interaction: {
+                    mode: "nearest",
+                    axis: "x",
+                    intersect: false
+                }
+            }
+        });
+
+        // Temperature & Humidity
+        new Chart(document.getElementById("tempHumChart"), {
+            type: "line",
+            data: {
+                labels: timestamps,
+                datasets: [
+                    {
+                        label: "Temperature (°C)",
+                        data: tempValues,
+                        borderColor: chartColors.danger,
+                        backgroundColor: "rgba(239, 68, 68, 0.1)",
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2.5,
+                        yAxisID: "y1",
+                        pointRadius: 0,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: "Humidity (%)",
+                        data: humValues,
+                        borderColor: chartColors.info,
+                        backgroundColor: "rgba(6, 182, 212, 0.1)",
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2.5,
+                        yAxisID: "y2",
+                        pointRadius: 0,
+                        pointHoverRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { padding: 15, usePointStyle: true }
+                    },
+                    tooltip: {
+                        mode: "index",
+                        intersect: false,
+                        backgroundColor: "#1e293b",
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 0, maxTicksLimit: 8 }
+                    },
+                    y1: {
+                        type: "linear",
+                        position: "left",
+                        grid: { color: "#f1f5f9" },
+                        border: { display: false }
+                    },
+                    y2: {
+                        type: "linear",
+                        position: "right",
+                        grid: { display: false },
+                        border: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Air Quality Distribution
+        new Chart(document.getElementById("qualityChart"), {
+            type: "doughnut",
+            data: {
+                labels: qLabels,
+                datasets: [{
+                    data: qCounts,
+                    backgroundColor: [
+                        chartColors.success,
+                        chartColors.warning,
+                        "#fb923c",
+                        chartColors.danger
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: { padding: 15, usePointStyle: true }
+                    },
+                    tooltip: {
+                        backgroundColor: "#1e293b",
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+
+        // Daily Average
+        new Chart(document.getElementById("dailyAvgChart"), {
+            type: "bar",
+            data: {
+                labels: dayLabels,
+                datasets: [{
+                    label: "Daily Average MQ",
+                    data: dayAvgMq,
+                    backgroundColor: chartColors.purple,
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { padding: 15, usePointStyle: true }
+                    },
+                    tooltip: {
+                        backgroundColor: "#1e293b",
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 45, minRotation: 45 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: "#f1f5f9" },
+                        border: { display: false }
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+
+</body>
+</html>
