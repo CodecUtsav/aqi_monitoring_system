@@ -3,11 +3,11 @@ from pymongo import MongoClient
 from collections import defaultdict, Counter
 from datetime import datetime, date, timedelta
 import json
-
+import os
 app = Flask(__name__)
 
 # ---- MongoDB Connection ----
-MONGO_URI = "mongodb+srv://root:root@cluster0.snbyy.mongodb.net/?appName=Cluster0"   # change if using Atlas
+MONGO_URI = os.getenv("MONGO_URI")   # change if using Atlas
 client = MongoClient(MONGO_URI)
 db = client["air_quality"]
 collection = db["readings"]
